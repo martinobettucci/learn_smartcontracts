@@ -13,6 +13,15 @@ contract Election is Ownable, AccessControl, Pausable {
     // Un candidat qui peut être voté
     bytes32 public constant CANDIDAT_VOTER = keccak256("CANDIDAT_VOTER");
 
+    // Erreurs explicites pour remplacer les messages de require
+    error NotLegallyAbleToVote();
+    error ElectionNotOngoing();
+    error ElectionAlreadyOngoing();
+    error AlreadyRegisteredCandidate();
+    error AlreadyRegisteredVoter();
+    error CitizenAlreadyVoted();
+    error InvalidCandidateId();
+
     // Les participants aux ballotins (votants ou candidats)
     struct Citizen {
         string name;
@@ -52,25 +61,33 @@ contract Election is Ownable, AccessControl, Pausable {
 
     // est major?
     modifier isMature(uint8 age) {
-        require(age >= 18, "Citizen must be at least 18 years old");
+        if (age < 18) {
+            revert NotLegallyAbleToVote();
+        }
         _;
     }
 
     // election en cours?
     modifier whenElectionOngoing() {
-        require(electionOngoing, "Election is not ongoing");
+        if (!electionOngoing) {
+            revert ElectionNotOngoing();
+        }
         _;
     }
 
     // election pas en cours?
     modifier whenElectionNotOngoing() {
-        require(!electionOngoing, "Election is ongoing");
+        if (electionOngoing) {
+            revert ElectionAlreadyOngoing();
+        }
         _;
     }
 
     // n'a pas encore voté?
     modifier onlyUnvoted() {
-        require(!hasVoted[msg.sender], "Citizen has already voted");
+        if (hasVoted[msg.sender]) {
+            revert CitizenAlreadyVoted();
+        }
         _; 
     }
 
@@ -81,7 +98,9 @@ contract Election is Ownable, AccessControl, Pausable {
         public
     {
         // ne pas s'enregistrer deux fois
-        require(!hasRole(CANDIDAT_VOTER, citizen), "Candidat already registered");
+        if (hasRole(CANDIDAT_VOTER, citizen)) {
+            revert AlreadyRegisteredCandidate();
+        }
 
         num_candidats++;
         candidats[num_candidats] = Citizen(name, age, city, citizen);
@@ -96,7 +115,9 @@ contract Election is Ownable, AccessControl, Pausable {
         public
     {
         // ne pas s'enregistrer deux fois
-        require(!hasRole(REGISTER_VOTER, citizen), "Voter already registered");
+        if (hasRole(REGISTER_VOTER, citizen)) {
+            revert AlreadyRegisteredVoter();
+        }
 
         num_voters++;
         voters[num_voters] = Citizen(name, age, city, citizen);
@@ -150,7 +171,9 @@ contract Election is Ownable, AccessControl, Pausable {
         onlyUnvoted
         public
     {
-        require(candidateId > 0 && candidateId <= num_candidats, "Invalid candidate ID");
+        if (candidateId == 0 || candidateId > num_candidats) {
+            revert InvalidCandidateId();
+        }
         votesReceived[candidateId]++;
         hasVoted[msg.sender] = true;
         emit VoteCasted();

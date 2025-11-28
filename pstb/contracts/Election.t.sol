@@ -25,27 +25,27 @@ contract ElectionTest is Test {
     }
 
     function test_RegisterCandidateRequiresMature() public {
-        vm.expectRevert("Citizen must be at least 18 years old");
+        vm.expectRevert(abi.encodeWithSelector(Election.NotLegallyAbleToVote.selector));
         vm.prank(owner);
         election.registerCandidat("Young", 17, "Lyon", address(0x11));
     }
 
     function test_RegisterCandidateCannotWhileElectionOngoing() public {
         startElectionAsOwner();
-        vm.expectRevert("Election is ongoing");
+        vm.expectRevert(abi.encodeWithSelector(Election.ElectionAlreadyOngoing.selector));
         vm.prank(owner);
         election.registerCandidat("LateEntry", 35, "Nice", address(0x12));
     }
 
     function test_VoterRegistrationOnlyDuringElection() public {
-        vm.expectRevert("Election is not ongoing");
+        vm.expectRevert(abi.encodeWithSelector(Election.ElectionNotOngoing.selector));
         vm.prank(owner);
         election.registerVoter("Citizen", 25, "Lyon", address(0x22));
     }
 
     function test_VoterRegistrationRequiresMaturity() public {
         startElectionAsOwner();
-        vm.expectRevert("Citizen must be at least 18 years old");
+        vm.expectRevert(abi.encodeWithSelector(Election.NotLegallyAbleToVote.selector));
         vm.prank(owner);
         election.registerVoter("Child", 17, "Paris", address(0x23));
     }
@@ -88,11 +88,11 @@ contract ElectionTest is Test {
         assertEq(election.votesReceived(candidateId), 1);
         assertTrue(election.hasVoted(voter));
 
-        vm.expectRevert("Citizen has already voted");
+        vm.expectRevert(abi.encodeWithSelector(Election.CitizenAlreadyVoted.selector));
         vm.prank(voter);
         election.vote(candidateId);
 
-        vm.expectRevert("Invalid candidate ID");
+        vm.expectRevert(abi.encodeWithSelector(Election.InvalidCandidateId.selector));
         vm.prank(voterTwo);
         election.vote(0);
 
