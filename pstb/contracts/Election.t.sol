@@ -51,13 +51,13 @@ contract ElectionTest is Test {
     }
 
     function test_OwnerOnlyStartAndEndElection() public {
-        vm.expectRevert("Ownable: caller is not the owner");
+        vm.expectRevert("OwnableUnauthorizedAccount(0x0000000000000000000000000000000000000002)");
         vm.prank(address(0x2));
         election.startElection();
 
         startElectionAsOwner();
 
-        vm.expectRevert("Ownable: caller is not the owner");
+        vm.expectRevert("OwnableUnauthorizedAccount(0x0000000000000000000000000000000000000002)");
         vm.prank(address(0x2));
         election.endElection();
     }
@@ -68,7 +68,7 @@ contract ElectionTest is Test {
         endElectionAsOwner();
         assertTrue(election.paused());
 
-        vm.expectRevert("Pausable: paused");
+        vm.expectRevert("EnforcedPause()");
         vm.prank(owner);
         election.startElection();
     }

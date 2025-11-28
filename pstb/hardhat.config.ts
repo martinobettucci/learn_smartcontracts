@@ -8,9 +8,6 @@ export default defineConfig({
       default: {
         version: "0.8.28",
       },
-      election: {
-        version: "0.8.20",
-      },
       production: {
         version: "0.8.28",
         settings: {
