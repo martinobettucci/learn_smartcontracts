@@ -30,28 +30,40 @@ npx hardhat test solidity
 npx hardhat test mocha
 ```
 
-### Make a deployment to Sepolia
+### Ignition deployments
 
-This project includes an example Ignition module to deploy the contract. You can deploy this module to a locally simulated chain or to Sepolia.
+This project now ships with several Ignition modules:
 
-To run the deployment to a local chain:
+- `ignition/modules/Counter.ts` - basic deployment of the `Counter` contract.
+- `ignition/modules/Election.ts` - deploys the on-chain `Election` contract.
+- `ignition/modules/ElectionInteractor.ts` - connects to an already deployed `Election` contract and runs a live-election scenario (registers a candidate, voters, votes, and closes the election) using your configured accounts.
 
-```shell
-npx hardhat ignition deploy ignition/modules/Counter.ts
-```
-
-To run the deployment to Sepolia, you need an account with funds to send the transaction. The provided Hardhat configuration includes a Configuration Variable called `SEPOLIA_PRIVATE_KEY`, which you can use to set the private key of the account you want to use.
-
-You can set the `SEPOLIA_PRIVATE_KEY` variable using the `hardhat-keystore` plugin or by setting it as an environment variable.
-
-To set the `SEPOLIA_PRIVATE_KEY` config variable using `hardhat-keystore`:
+Run them against the hardhat-simulated chain with:
 
 ```shell
-npx hardhat keystore set SEPOLIA_PRIVATE_KEY
+npx hardhat ignition run ElectionModule --network hardhatMainnet
+npx hardhat ignition run ElectionModule --network hardhatOp
+npx hardhat ignition run ElectionInteractor --network sepoliaFork
 ```
 
-After setting the variable, you can run the deployment with the Sepolia network:
+The Counter module can also be deployed to Sepolia once you set the `SEPOLIA_PRIVATE_KEY` variable:
 
 ```shell
-npx hardhat ignition deploy --network sepolia ignition/modules/Counter.ts
+npx hardhat ignition run CounterModule --network sepolia
 ```
+
+### Environment variables & demo keys
+
+Copy `.env.example` to `.env`, then populate the RPC/keystore values. At minimum you should define:
+
+- `SEPOLIA_RPC_URL` – RPC endpoint for Sepolia.
+- `SEPOLIA_PRIVATE_KEY` – funded account used for Sepolia tests.
+- `ETHERSCAN_API_KEY` – used by the Hardhat `verify` task (optional).
+
+For the forked flows we rely on additional demo accounts. Generate fresh values with:
+
+```shell
+bash ./scripts/generate-demo-keys.sh
+```
+
+That script emits four random `0x` private keys and rewrites the corresponding `DEMO_ACCOUNT_*_PRIVATE_KEY` entries in `.env`. The Hardhat config (`sepoliaFork` network) reads those variables automatically so Ignition can impersonate multiple users during the ElectionInteractor run.
